@@ -1,0 +1,40 @@
+在使用create-react-app后引入 web3 会报错 ： webpack<5 used to include polyfills for node.js core modules by default.
+
+原因是：
+webpack < 5 过去默认包含 NodeJS polyfills。因为当前版本的 webpack默认不再包含 NodeJS polyfill，所以它会导致使用 webpack > 5 的 create-react-app 来构建带有 web3.js 和alchemyweb3.js 库的应用程序的开发人员出现问题。
+
+解决方案：
+1.npm install --save-dev react-app-rewired
+2.npm install --save-dev crypto-browserify stream-browserify assert stream-http https-browserify os-browserify url buffer process
+3.在项目的根文件夹中，创建一个名为 config-overrides.js 的新文件，并向其中添加以下代码：
+            const webpack = require('webpack'); 
+            module.exports = function override(config) { 
+                const fallback = config.resolve.fallback || {}; 
+                Object.assign(fallback, { 
+                  "crypto": require.resolve("crypto-browserify"), 
+                  "stream": require.resolve("stream-browserify"), 
+                  "assert": require.resolve("assert"), 
+                  "http": require.resolve("stream-http"), 
+                  "https": require.resolve("https-browserify"), 
+                  "os": require.resolve("os-browserify"), 
+                  "url": require.resolve("url") 
+                  }) 
+               config.resolve.fallback = fallback; 
+               config.plugins = (config.plugins || []).concat([ 
+                new webpack.ProvidePlugin({ 
+                  process: 'process/browser', 
+                  Buffer: ['buffer', 'Buffer'] 
+                }) 
+               ]) 
+               return config; }
+4.在 package.json 文件中，将以下三个脚本字段的react-scripts替换为react-app- rewired 脚本以更新 webpack 配置：
+            "scripts": { 
+              "start": "react-app-rewired start", 
+              "build": "react-app-rewired build", 
+              "test": "react-app-rewired test", 
+              "eject": "react-scripts eject" 
+             },
+至此，解决完成，能正常使用 web3 。
+          
+
+
